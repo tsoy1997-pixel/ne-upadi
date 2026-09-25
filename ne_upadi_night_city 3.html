@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>НЕ УПАДИ! — Ночной город</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#070b1d;font-family:Arial,sans-serif}
+body{touch-action:none}
+#game{position:relative;width:100%;height:100%;overflow:hidden;background:
+linear-gradient(#07102e 0%,#151d55 55%,#24103f 100%)}
+.sky{position:absolute;inset:0;background:
+radial-gradient(circle at 78% 15%,#d8f4ff 0 4%,transparent 5%),
+linear-gradient(90deg,transparent 0 8%,rgba(53,91,170,.22) 8% 9%,transparent 9% 100%);
+}
+.moon{position:absolute;width:105px;height:105px;border-radius:50%;right:14%;top:8%;
+background:#dff8ff;box-shadow:0 0 35px #8bdcff;opacity:.95}
+.city{position:absolute;bottom:120px;left:0;width:180%;height:55%;
+background:
+linear-gradient(90deg,#10163d 0 3%,transparent 3% 7%,#151a49 7% 12%,transparent 12% 16%,#10163d 16% 20%,transparent 20% 25%,#181743 25% 31%,transparent 31% 36%,#11163d 36% 42%,transparent 42% 47%,#181743 47% 54%,transparent 54% 60%,#11163d 60% 66%,transparent 66% 72%,#181743 72% 78%,transparent 78% 84%,#11163d 84% 90%,transparent 90%);
+opacity:.9}
+.city:after{content:"";position:absolute;inset:20% 0 0;
+background:repeating-linear-gradient(90deg,transparent 0 36px,#ffd34d 36px 40px,transparent 40px 70px);
+opacity:.16}
+#hud{position:absolute;top:14px;left:14px;right:14px;display:flex;justify-content:space-between;z-index:20;color:white}
+.hudbox{background:rgba(6,12,35,.78);border:1px solid #3f75ff;border-radius:13px;padding:8px 12px;font-weight:700;box-shadow:0 0 12px #1639a8}
+#world{position:absolute;left:0;right:0;bottom:120px;height:42%;min-height:250px}
+.roof{position:absolute;left:-5%;bottom:0;width:110%;height:72px;background:linear-gradient(#37345e,#17172e);border-top:5px solid #ff2c91;box-shadow:0 -8px 20px rgba(255,44,145,.35)}
+.roof:after{content:"";position:absolute;inset:30px 0 0;background:repeating-linear-gradient(90deg,transparent 0 55px,#6c6a9b 55px 59px,transparent 59px 90px);opacity:.45}
+#player{position:absolute;width:50px;height:62px;left:23%;bottom:68px;z-index:12;transition:left .04s linear}
+.head{position:absolute;left:12px;top:0;width:30px;height:30px;border-radius:50%;background:#c77a55;box-shadow:0 0 0 3px #15122c}
+.body{position:absolute;left:8px;top:26px;width:35px;height:28px;border-radius:10px;background:#e33445;box-shadow:0 0 12px #ff3650}
+.leg{position:absolute;top:48px;width:13px;height:18px;border-radius:6px;background:#10152c}
+.l1{left:9px}.l2{right:9px}
+.star{position:absolute;width:26px;height:26px;background:#ffd42a;clip-path:polygon(50% 0,61% 35%,98% 38%,70% 60%,79% 98%,50% 76%,21% 98%,30% 60%,2% 38%,39% 35%);filter:drop-shadow(0 0 8px #ffd42a);z-index:8}
+.enemy{position:absolute;width:42px;height:42px;border-radius:50%;background:#d52bff;box-shadow:0 0 18px #d52bff;z-index:9}
+.enemy:before,.enemy:after{content:"";position:absolute;top:15px;width:7px;height:7px;background:#fff;border-radius:50%}
+.enemy:before{left:9px}.enemy:after{right:9px}
+.block{position:absolute;width:52px;height:54px;background:linear-gradient(135deg,#5a587a,#292943);border:2px solid #9b99c4;border-radius:6px;z-index:10;box-shadow:0 8px 0 #17172c}
+#message{position:absolute;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(2,5,18,.66);backdrop-filter:blur(4px)}
+.panel{width:min(88%,390px);padding:25px 20px;border:2px solid #3d77ff;border-radius:22px;background:linear-gradient(180deg,rgba(18,29,72,.96),rgba(8,13,35,.96));color:#fff;text-align:center;box-shadow:0 0 35px rgba(41,105,255,.35)}
+h1{margin:0 0 8px;font-size:35px;text-shadow:0 0 14px #ff2c91}
+p{margin:8px 0 18px;font-size:17px;color:#d9e2ff;line-height:1.4}
+button{border:0;border-radius:14px;background:#ffd21a;color:#101018;font-size:20px;font-weight:900;padding:15px 34px;box-shadow:0 6px 0 #b98500}
+#dash{position:absolute;right:18px;bottom:25px;z-index:30;width:76px;height:76px;border-radius:50%;border:2px solid #55cfff;background:rgba(6,15,48,.8);color:#fff;font-size:13px;font-weight:900}
+#dash.ready{box-shadow:0 0 24px #2fc8ff}
+#tip{position:absolute;bottom:26px;left:18px;color:#dce8ff;font-size:13px;opacity:.8;z-index:20}
+.flash{animation:flash .22s}
+@keyframes flash{50%{filter:brightness(2)}}
+</style>
+</head>
+<body>
+<div id="game">
+  <div class="sky"></div><div class="moon"></div><div class="city"></div>
+  <div id="hud">
+    <div class="hudbox">⭐ <span id="score">0</span></div>
+    <div class="hudbox">🏆 <span id="best">0</span> м</div>
+  </div>
+  <div id="world"><div class="roof"></div>
+    <div id="player"><div class="head"></div><div class="body"></div><div class="leg l1"></div><div class="leg l2"></div></div>
+  </div>
+  <div id="tip">Веди пальцем по экрану</div>
+  <button id="dash">⚡<br>РЫВОК</button>
+  <div id="message">
+    <div class="panel">
+      <h1 id="title">НЕ УПАДИ!</h1>
+      <p id="text">Уровень 1 · Ночной город<br>Собирай ⭐ и избегай врагов.</p>
+      <button id="start">ИГРАТЬ</button>
+    </div>
+  </div>
+</div>
+<script>
+const game=document.getElementById('game'),world=document.getElementById('world'),player=document.getElementById('player');
+const scoreEl=document.getElementById('score'),bestEl=document.getElementById('best'),message=document.getElementById('message');
+const title=document.getElementById('title'),text=document.getElementById('text'),start=document.getElementById('start'),dashBtn=document.getElementById('dash');
+let playing=false,score=0,distance=0,best=+localStorage.getItem('nuBest')||0,x=.23,velocity=3.8,spawn=0,raf=0,dashReady=true,items=[];
+bestEl.textContent=best;
+
+function reset(){
+  document.querySelectorAll('.star,.enemy,.block').forEach(e=>e.remove());
+  items=[];score=0;distance=0;x=.23;velocity=3.8;spawn=0;dashReady=true;
+  player.style.left='23%';scoreEl.textContent='0';dashBtn.classList.add('ready');dashBtn.disabled=false;
+}
+function startGame(){
+  reset();playing=true;message.style.display='none';last=performance.now();raf=requestAnimationFrame(loop);
+}
+function spawnItem(){
+  const type=Math.random();
+  const el=document.createElement('div');
+  let kind='star', y=70+Math.random()*22;
+  if(type<.56){el.className='star'}
+  else if(type<.82){el.className='enemy'}
+  else {el.className='block'}
+  el.style.left=(105+Math.random()*20)+'%';el.style.bottom=y+'px';world.appendChild(el);
+  items.push({el,kind:el.classList.contains('star')?'star':el.classList.contains('enemy')?'enemy':'block',x:118});
+}
+let last=0;
+function loop(t){
+  if(!playing)return;
+  const dt=Math.min(32,t-last);last=t;
+  distance+=velocity*dt/16;
+  if(distance>0){scoreEl.textContent=Math.floor(distance)}
+  velocity=Math.min(8,3.8+distance/900);
+  spawn+=dt;
+  if(spawn>Math.max(380,760-distance*.15)){spawn=0;spawnItem()}
+  for(let i=items.length-1;i>=0;i--){
+    const it=items[i];it.x-=velocity*dt/18;it.el.style.left=it.x+'%';
+    if(it.kind==='star'){
+      if(collide(it.el,player)){score+=10;it.el.remove();items.splice(i,1);continue}
+    }else if(collide(it.el,player)){if(it.kind==='enemy'){hit()}else{hit()};it.el.remove();items.splice(i,1);continue}
+    if(it.x<-15){it.el.remove();items.splice(i,1)}
+  }
+  raf=requestAnimationFrame(loop);
+}
+function collide(a,b){
+  const A=a.getBoundingClientRect(),B=b.getBoundingClientRect();
+  return A.left<B.right&&A.right>B.left&&A.top<B.bottom&&A.bottom>B.top;
+}
+function hit(){
+  game.classList.remove('flash');void game.offsetWidth;game.classList.add('flash');
+  gameOver();
+}
+function gameOver(){
+  playing=false;cancelAnimationFrame(raf);
+  const m=Math.floor(distance);
+  if(m>best){best=m;localStorage.setItem('nuBest',best);bestEl.textContent=best}
+  title.textContent='ТЫ УПАЛ!';
+  text.innerHTML='Дистанция: <b>'+m+' м</b><br>Звёзды: <b>'+score+'</b><br>Рывок помогает пройти дальше.';
+  start.textContent='ПОВТОРИТЬ';
+  message.style.display='flex';
+}
+function move(clientX){
+  if(!playing)return;
+  const r=world.getBoundingClientRect();
+  x=Math.max(.08,Math.min(.92,(clientX-r.left)/r.width));
+  player.style.left=(x*100)+'%';
+}
+game.addEventListener('touchstart',e=>{e.preventDefault();move(e.touches[0].clientX)},{passive:false});
+game.addEventListener('touchmove',e=>{e.preventDefault();move(e.touches[0].clientX)},{passive:false});
+dashBtn.addEventListener('click',()=>{
+  if(!playing||!dashReady)return;
+  dashReady=false;dashBtn.classList.remove('ready');player.style.transition='left .18s ease';
+  player.style.left=Math.min(92,x*100+18)+'%';
+  setTimeout(()=>player.style.transition='left .04s linear',220);
+  setTimeout(()=>{dashReady=true;dashBtn.classList.add('ready')},1500);
+});
+start.addEventListener('click',startGame);
+</script>
+</body>
+</html>
